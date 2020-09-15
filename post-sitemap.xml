@@ -7,6 +7,14 @@
     </url>
 
     <url>
+        <loc>http://www.huweihuang.com/article/service-invocation-api/</loc>
+        <lastmod>2020-09-15T14:34:47.983Z</lastmod>
+        <changefreq>weekly</changefreq>
+        <priority>0.6</priority>
+
+    </url>
+
+    <url>
         <loc>http://www.huweihuang.com/article/invoke-and-discover-services/</loc>
         <lastmod>2020-09-15T14:30:33.398Z</lastmod>
         <changefreq>weekly</changefreq>
