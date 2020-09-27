@@ -14,11 +14,11 @@
     <script async defer src="https://buttons.github.io/buttons.js"></script>
     <title>
         
-          调用远程服务 - ZhangX | Dapr
+          Dapr 文档 - ZhangX | Dapr
         
     </title>
 
-    <link rel="canonical" href="http://www.huweihuang.com/article/invoke-and-discover-services/">
+    <link rel="canonical" href="http://www.huweihuang.com/article/dapr-doc/">
 
     <!-- Bootstrap Core CSS -->
     <link rel="stylesheet" href="/css/bootstrap.min.css">
@@ -93,11 +93,11 @@
                               <a class="tag" href="/tags/#原文翻译" title="原文翻译">原文翻译</a>
                             
                         </div>
-                        <h1>调用远程服务</h1>
-                        <h2 class="subheading">docs/howto/invoke-and-discover-services/</h2>
+                        <h1>Dapr 文档</h1>
+                        <h2 class="subheading">dapr/docs</h2>
                         <span class="meta">
                             Posted by ZhangX on
-                            2020-09-15
+                            2020-09-17
                         </span>
                     </div>
                 
@@ -207,55 +207,48 @@
                 col-md-10 col-md-offset-1
                 post-container">
 
-                <h2><span id="调用远程服务">调用远程服务</span></h2>
+                <h2><span id="dapr-文档">Dapr 文档</span></h2>
 <hr>
-<p>在很多环境中，多个服务需要互相通讯，开发者常常会问自己以下问题：</p>
-<ul>
-<li>如何发现和调用不同的服务？</li>
-<li>如何处理重试和瞬态错误？</li>
-<li>如何正确使用分布式跟踪来查看调用图？</li>
-</ul>
-<p>Dapr 通过提供一个端点，将反向代理与内置服务发现结合起来，同时利用内置分布式跟踪和错误处理，可以使开发人员克服这些挑战。</p>
-<p>更多关于服务调用的信息，阅读<a href="/article/service-invocation/" title="概念文档">概念文档</a></p>
-<h3><span id="为你的服务选择-id">为你的服务选择 ID</span></h3>
-<p>Dapr 允许你为应用程序分配一个全局、唯一的 ID。</p>
-<p>这个 ID 封装你的应用程序状态，不管有多少个实例。</p>
-<h4><span id="使用-dapr-命令行界面设置-id">使用 Dapr 命令行界面设置 ID</span></h4>
-<p>在标准模式下，设置 --app-id 标记：</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">dapr run --app-id cart --app-port <span class="number">5000</span> python app.py</span><br></pre></td></tr></table></figure>
-<h4><span id="使用-k8s-设置-id">使用 K8S 设置 ID</span></h4>
-<p>在 K8S 中，在 pod 中设置 <a href="http://dapr.io/app-id" target="_blank" rel="noopener">dapr.io/app-id</a> ：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">apps/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Deployment</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line"><span class="attr">  name:</span> <span class="string">python-app</span></span><br><span class="line"><span class="attr">  namespace:</span> <span class="string">default</span></span><br><span class="line"><span class="attr">  labels:</span></span><br><span class="line"><span class="attr">    app:</span> <span class="string">python-app</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line"><span class="attr">  replicas:</span> <span class="number">1</span></span><br><span class="line"><span class="attr">  selector:</span></span><br><span class="line"><span class="attr">    matchLabels:</span></span><br><span class="line"><span class="attr">      app:</span> <span class="string">python-app</span></span><br><span class="line"><span class="attr">  template:</span></span><br><span class="line"><span class="attr">    metadata:</span></span><br><span class="line"><span class="attr">      labels:</span></span><br><span class="line"><span class="attr">        app:</span> <span class="string">python-app</span></span><br><span class="line"><span class="attr">      annotations:</span></span><br><span class="line">        <span class="string">dapr.io/enabled:</span> <span class="string">"true"</span></span><br><span class="line">        <span class="string">dapr.io/app-id:</span> <span class="string">"cart"</span></span><br><span class="line">        <span class="string">dapr.io/app-port:</span> <span class="string">"5000"</span></span><br><span class="line"><span class="string">...</span></span><br></pre></td></tr></table></figure>
-<h4><span id="在代码中调用服务">在代码中调用服务</span></h4>
-<p>Dapr 使用边车、去中心化架构。使用 Dapr 调用应用程序，你可以在你的集群/环境使用 <code>invoke</code> 端点。</p>
-<p>边车编程模式鼓励每个应用程序和它自己的 Dapr 实例沟通。Dapr 实例相互发现并通讯。</p>
-<p><em>注意：以下是一个 Python cart 应用程序实例。它可以使用任何编程语言实现</em></p>
-<figure class="highlight python"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">from</span> flask <span class="keyword">import</span> Flask</span><br><span class="line">app = Flask(__name__)</span><br><span class="line"></span><br><span class="line"><span class="meta">@app.route('/add', methods=['POST'])</span></span><br><span class="line"><span class="function"><span class="keyword">def</span> <span class="title">add</span><span class="params">()</span>:</span></span><br><span class="line">    <span class="keyword">return</span> <span class="string">"Added!"</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">if</span> __name__ == <span class="string">'__main__'</span>:</span><br><span class="line">    app.run()</span><br></pre></td></tr></table></figure>
-<p>这个 Python 应用程序通过 <code>/add</code> 终端暴露了一个 <code>add()</code> 方法。</p>
-<h4><span id="使用-curl-调用">使用 curl 调用</span></h4>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http://localhost:3500/v1.0/invoke/cart/method/add -X POST</span><br></pre></td></tr></table></figure>
-<p>由于 add 端点是一个 ‘POST’ 方法，我们在 curl 命令中使用 <code>-X POST</code> 。</p>
-<p>调用 ‘GET’ 端点：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http://localhost:3500/v1.0/invoke/cart/method/add</span><br></pre></td></tr></table></figure>
-<p>调用 ‘DELETE’ 端点：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">curl http://localhost:3500/v1.0/invoke/cart/method/add -X DELETE</span><br></pre></td></tr></table></figure>
-<p>Dapr 在调用的服务 HTTP 应答消息体中放任何负载。</p>
-<h4><span id="命名空间">命名空间</span></h4>
-<p>当运行在[支持命名空间的平台]上时，你应该把目标应用程序的命名空间包含在应用程序 ID 中：</p>
-<figure class="highlight cmd"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">myApp.production</span><br></pre></td></tr></table></figure>
-<p>查看[跨命名空间 API 规范]了解更多关于命名空间的信息。</p>
-<h2><span id="概述">概述</span></h2>
-<hr>
-<p>上面的示例为你展示了如何直接调用不同的服务（运行在本地或者 K8S），Dapr 输出指标和追踪信息允许你可视化服务间的调用图、错误日志和可选地记录有效负载主体。</p>
-<h2><span id="相关主题">相关主题</span></h2>
-<ul>
-<li>
-<a href="/article/service-invocation/" title="服务调用概念">服务调用概念</a>
-</li>
-<li>
-<a href="/article/service-invocation-api/" title="服务调用-API-规范">服务调用-API-规范</a>
-</li>
-</ul>
+<h3><span id="内容">内容</span></h3>
+<table>
+<thead>
+<tr>
+<th>主题</th>
+<th>描述</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="/article/doc-overview/" title="概述">概述</a></td>
+<td>Dapr 概述以及你如何使用它构建事件驱动、分部署应用程序</td>
+</tr>
+<tr>
+<td><a href="/article/getting-started/" title="快速开始">快速开始</a></td>
+<td>设置你的开发环境</td>
+</tr>
+<tr>
+<td>概念</td>
+<td>Dapr 概念解释</td>
+</tr>
+<tr>
+<td>如何做</td>
+<td>指导解释如何完成指定的任务</td>
+</tr>
+<tr>
+<td>最佳实践</td>
+<td>指导解释使用 Dapr 最佳实践</td>
+</tr>
+<tr>
+<td>引用</td>
+<td>API 和绑定引用文档</td>
+</tr>
+<tr>
+<td>FAQ</td>
+<td>常见问答</td>
+</tr>
+</tbody>
+</table>
+<h3><span id="更多文档">更多文档</span></h3>
 
                 
 
@@ -264,12 +257,12 @@
                 <ul class="pager">
                     
                         <li class="previous">
-                            <a href="/article/service-invocation-api/" data-toggle="tooltip" data-placement="top" title="服务调用 API 规范">&larr; Previous Post</a>
+                            <a href="/article/environment-setup/" data-toggle="tooltip" data-placement="top" title="环境设置">&larr; Previous Post</a>
                         </li>
                     
                     
                         <li class="next">
-                            <a href="/article/service-invocation/" data-toggle="tooltip" data-placement="top" title="服务调用">Next Post &rarr;</a>
+                            <a href="/article/getting-started/" data-toggle="tooltip" data-placement="top" title="入门">Next Post &rarr;</a>
                         </li>
                     
                 </ul>
@@ -314,7 +307,7 @@
         <div id="toc" class="toc-article">
         <strong class="toc-title">Contents</strong>
         
-          <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#undefined"><span class="toc-nav-number">1.</span> <span class="toc-nav-text"><span id="&#x8C03;&#x7528;&#x8FDC;&#x7A0B;&#x670D;&#x52A1;">&#x8C03;&#x7528;&#x8FDC;&#x7A0B;&#x670D;&#x52A1;</span></span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#undefined"><span class="toc-nav-number">1.1.</span> <span class="toc-nav-text"><span id="&#x4E3A;&#x4F60;&#x7684;&#x670D;&#x52A1;&#x9009;&#x62E9;-id">&#x4E3A;&#x4F60;&#x7684;&#x670D;&#x52A1;&#x9009;&#x62E9; ID</span></span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#undefined"><span class="toc-nav-number">1.1.1.</span> <span class="toc-nav-text"><span id="&#x4F7F;&#x7528;-dapr-&#x547D;&#x4EE4;&#x884C;&#x754C;&#x9762;&#x8BBE;&#x7F6E;-id">&#x4F7F;&#x7528; Dapr &#x547D;&#x4EE4;&#x884C;&#x754C;&#x9762;&#x8BBE;&#x7F6E; ID</span></span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#undefined"><span class="toc-nav-number">1.1.2.</span> <span class="toc-nav-text"><span id="&#x4F7F;&#x7528;-k8s-&#x8BBE;&#x7F6E;-id">&#x4F7F;&#x7528; K8S &#x8BBE;&#x7F6E; ID</span></span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#undefined"><span class="toc-nav-number">1.1.3.</span> <span class="toc-nav-text"><span id="&#x5728;&#x4EE3;&#x7801;&#x4E2D;&#x8C03;&#x7528;&#x670D;&#x52A1;">&#x5728;&#x4EE3;&#x7801;&#x4E2D;&#x8C03;&#x7528;&#x670D;&#x52A1;</span></span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#undefined"><span class="toc-nav-number">1.1.4.</span> <span class="toc-nav-text"><span id="&#x4F7F;&#x7528;-curl-&#x8C03;&#x7528;">&#x4F7F;&#x7528; curl &#x8C03;&#x7528;</span></span></a></li><li class="toc-nav-item toc-nav-level-4"><a class="toc-nav-link" href="#undefined"><span class="toc-nav-number">1.1.5.</span> <span class="toc-nav-text"><span id="&#x547D;&#x540D;&#x7A7A;&#x95F4;">&#x547D;&#x540D;&#x7A7A;&#x95F4;</span></span></a></li></ol></li></ol></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#undefined"><span class="toc-nav-number">2.</span> <span class="toc-nav-text"><span id="&#x6982;&#x8FF0;">&#x6982;&#x8FF0;</span></span></a></li><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#undefined"><span class="toc-nav-number">3.</span> <span class="toc-nav-text"><span id="&#x76F8;&#x5173;&#x4E3B;&#x9898;">&#x76F8;&#x5173;&#x4E3B;&#x9898;</span></span></a></li></ol>
+          <ol class="toc-nav"><li class="toc-nav-item toc-nav-level-2"><a class="toc-nav-link" href="#undefined"><span class="toc-nav-number">1.</span> <span class="toc-nav-text"><span id="dapr-&#x6587;&#x6863;">Dapr &#x6587;&#x6863;</span></span></a><ol class="toc-nav-child"><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#undefined"><span class="toc-nav-number">1.1.</span> <span class="toc-nav-text"><span id="&#x5185;&#x5BB9;">&#x5185;&#x5BB9;</span></span></a></li><li class="toc-nav-item toc-nav-level-3"><a class="toc-nav-link" href="#undefined"><span class="toc-nav-number">1.2.</span> <span class="toc-nav-text"><span id="&#x66F4;&#x591A;&#x6587;&#x6863;">&#x66F4;&#x591A;&#x6587;&#x6863;</span></span></a></li></ol></li></ol>
         
         </div>
       </aside>
